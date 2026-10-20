@@ -94,7 +94,7 @@ function renderHome() {
   results.append(el("h2", "section-title", "용어 카드"));
   const list = el("ul", "list");
   [...store.cards].sort((a, b) => a.term.localeCompare(b.term, "ko")).forEach((card) => {
-    list.append(makeItem(cardRow(card), () => cardDetail(card, store.manifest.docs, null)));
+    list.append(makeItem(cardRow(card), () => cardDetail(card, store.manifest.docs, null, store.cards)));
   });
   results.append(list);
 }
@@ -125,7 +125,7 @@ function runSearch() {
     results.append(el("h2", "section-title", "용어 카드"));
     const cardList = el("ul", "list");
     current.cardMatches.forEach((card) => {
-      cardList.append(makeItem(cardRow(card), () => cardDetail(card, store.manifest.docs, current.regex)));
+      cardList.append(makeItem(cardRow(card), () => cardDetail(card, store.manifest.docs, current.regex, store.cards)));
     });
     results.append(cardList);
   }

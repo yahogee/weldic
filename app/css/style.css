@@ -1,7 +1,7 @@
 /* weldic styles: one column on phones, list + detail on wide screens. */
 :root {
   --bg: #ffffff; --surface: #f4f6fa; --text: #1b2430; --muted: #5a6575;
-  --accent: #1e5ea8; --accent-text: #ffffff; --line: #d9dfe8;
+  --accent: var(--accent); --accent-text: #ffffff; --line: #d9dfe8;
   --ok-bg: #e3f4e8; --ok-text: #1d6b34; --warn-bg: #fff1d6; --warn-text: #8a5a00;
   --mark: #ffe58a; --banner-bg: #fff8e1; --banner-text: #6b4e00;
 }
@@ -73,3 +73,8 @@ footer p { margin: 2px 0; }
   #detailPane:not(.filled)::before { content: "왼쪽에서 항목을 누르면 여기에 내용이 나와요"; display: block; color: var(--muted); padding: 40px 0; text-align: center; }
   .item.open { background: var(--surface); }
 }
+
+/* Related term chips shown under a card detail */
+.related { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 4px; }
+.related-chip { font: inherit; font-size: .9rem; padding: 8px 12px; min-height: 40px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: inherit; cursor: pointer; }
+.related-chip:hover, .related-chip:focus-visible { border-color: var(--accent); color: var(--accent); }

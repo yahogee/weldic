@@ -157,8 +157,13 @@ def build_cards(cards, documents):
     """Attach a computed status to each card and report problems."""
     docs_by_file = {d["file"]: d for d in documents}
     seen_ids, failures = set(), 0
+    all_ids = {card.get("id") for card in cards}
     for card in cards:
         problems = verify_card(card, docs_by_file)
+        # Related card ids must point to existing cards
+        for related_id in card.get("related", []):
+            if related_id not in all_ids:
+                problems.append(f"related id not found: {related_id}")
         if card.get("id") in seen_ids:
             problems.append("duplicate id")
         seen_ids.add(card.get("id"))

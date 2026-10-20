@@ -64,6 +64,9 @@
 로컬 빌드: `python3 tools/build.py` (PDF 추출에 `pdftotext`(poppler) 필요). `--strict` 를 붙이면 카드 검증 실패 시 오류로 종료합니다.
 
 **용어 카드 필드:** `id`, `term`, `aliases`, `system`, `source{doc,label}`, `quote`(원문 그대로), `gloss`(AI 작성 풀이, 숫자 금지), `basis_date`, 선택 `confirmed`(사람이 확인했을 때 true).
+선택 필드 `related`: 같이 알아야 할 카드의 `id` 목록. 카드 아래 "같이 알아야 할 용어" 버튼으로 나타나며, 없는 id가 있으면 빌드가 알려 줍니다.
+
+**카드 추가 방법:** `terms/` 폴더의 JSON 파일에 카드 항목을 더하거나 새 `.json` 파일을 올립니다(파일 이름은 자유). `quote`는 `library/` 문서에 실제로 있는 문장을 그대로 붙여 넣고, `source.label`은 쪽(예: `57쪽`)이나 조(예: `제7조`)로 씁니다. 올리면 자동으로 빌드·배포되고, 원문과 안 맞으면 "검수 전"으로 표시됩니다.
 
 ## 출처
 

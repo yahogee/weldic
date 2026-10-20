@@ -73,7 +73,7 @@ export function pageRow(hit, tokens, regex) {
 }
 
 /** Detail view of a term card. */
-export function cardDetail(card, docs, regex) {
+export function cardDetail(card, docs, regex, allCards = []) {
   const box = el("div", "detail-body");
   box.append(el("h2", "", card.term));
   const meta = el("div", "meta");
@@ -96,6 +96,24 @@ export function cardDetail(card, docs, regex) {
   appendHighlighted(gloss, card.gloss, regex);
   box.append(gloss);
   box.append(el("p", "note", "풀이는 이해를 돕는 참고용이에요. 금액·비율·기준은 반드시 원문을 확인하세요."));
+
+  // Related cards: clicking one swaps this detail for that card in place
+  const related = (card.related || []).map((id) => allCards.find((c) => c.id === id)).filter(Boolean);
+  if (related.length > 0) {
+    box.append(el("h3", "", "같이 알아야 할 용어"));
+    const chips = el("div", "related");
+    related.forEach((target) => {
+      const button = el("button", "related-chip", target.term);
+      button.type = "button";
+      button.addEventListener("click", () => {
+        const next = cardDetail(target, docs, null, allCards);
+        box.replaceWith(next);
+        next.scrollIntoView({ block: "start", behavior: "smooth" });
+      });
+      chips.append(button);
+    });
+    box.append(chips);
+  }
   return box;
 }
 
