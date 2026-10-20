@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#1e5ea8">
+  <title>weldic</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>weldic</h1>
+    <button id="docsBtn" class="link-btn" type="button">자료 목록</button>
+  </header>
+
+  <div class="banner">업무 판단과 민원 안내는 반드시 원문을 기준으로 하세요.</div>
+
+  <main>
+    <div id="mainView">
+      <div class="searchbox">
+        <input id="q" type="search" inputmode="search" placeholder="용어나 단어를 입력하세요" autocomplete="off" aria-label="검색">
+        <button id="clearBtn" class="clear" type="button" hidden aria-label="지우기">✕</button>
+      </div>
+      <p id="status" class="status"></p>
+      <div class="layout">
+        <section id="results" aria-live="polite"></section>
+        <aside id="detailPane" aria-label="상세 내용"></aside>
+      </div>
+    </div>
+    <div id="docsView" hidden></div>
+  </main>
+
+  <footer>
+    <p>출처: 보건복지부 사업안내, 국가법령정보센터 (공공누리 출처표시 · 원문 변경 없이 인용)</p>
+    <p id="footerInfo"></p>
+  </footer>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
