@@ -35,7 +35,8 @@
     "related": [
       "nbls-01",
       "nbls-03",
-      "nbls-50"
+      "nbls-50",
+      "nbls-71"
     ]
   },
   {
@@ -92,7 +93,10 @@
       "nbls-46",
       "nbls-47",
       "nbls-09",
-      "nbls-26"
+      "nbls-26",
+      "nbls-62",
+      "nbls-63",
+      "nbls-69"
     ]
   },
   {
@@ -145,7 +149,8 @@
       "nbls-18",
       "nbls-19",
       "nbls-20",
-      "nbls-09"
+      "nbls-09",
+      "nbls-53"
     ]
   },
   {
@@ -172,7 +177,9 @@
       "nbls-20",
       "nbls-27",
       "nbls-28",
-      "bp-02"
+      "bp-02",
+      "nbls-54",
+      "nbls-62"
     ]
   },
   {
@@ -191,7 +198,10 @@
     "basis_date": "2025-10-01",
     "related": [
       "nbls-11",
-      "nbls-01"
+      "nbls-01",
+      "nbls-54",
+      "nbls-55",
+      "nbls-70"
     ]
   },
   {
@@ -212,7 +222,8 @@
       "nbls-06",
       "nbls-09",
       "nbls-10",
-      "nbls-40"
+      "nbls-40",
+      "nbls-54"
     ]
   },
   {
@@ -254,7 +265,8 @@
     "related": [
       "nbls-01",
       "nbls-12",
-      "nbls-38"
+      "nbls-38",
+      "nbls-67"
     ]
   },
   {
@@ -274,7 +286,9 @@
       "nbls-50",
       "nbls-35",
       "nbls-36",
-      "nbls-37"
+      "nbls-37",
+      "nbls-63",
+      "nbls-68"
     ]
   },
   {
@@ -291,7 +305,10 @@
     "basis_date": "2025-10-01",
     "related": [
       "nbls-04",
-      "nbls-37"
+      "nbls-37",
+      "nbls-59",
+      "nbls-65",
+      "bp-20"
     ]
   },
   {
@@ -312,7 +329,10 @@
       "nbls-36",
       "nbls-35",
       "nbls-17",
-      "nbls-50"
+      "nbls-50",
+      "nbls-66",
+      "bp-18",
+      "bp-19"
     ]
   },
   {
@@ -331,7 +351,8 @@
       "nbls-16",
       "nbls-35",
       "nbls-36",
-      "nbls-50"
+      "nbls-50",
+      "nbls-66"
     ]
   },
   {
