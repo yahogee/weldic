@@ -28,7 +28,7 @@ SITE_DIR = ROOT / "site"
 
 KST = timezone(timedelta(hours=9))
 DOC_ID_LENGTH = 10
-ARTICLE_PATTERN = re.compile(r"^(제\d+조(?:의\d+)?)")
+ARTICLE_PATTERN = re.compile(r"^(제\d+조(?:의\d+)?)(?=\s|$)")
 LAW_REF_PATTERN = re.compile(r"제\d+[조항호](?:의\d+)?")
 DIGIT_PATTERN = re.compile(r"\d")
 SUPPORTED_SUFFIXES = {".pdf", ".txt"}
