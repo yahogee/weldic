@@ -4,6 +4,7 @@ import { normalizeText } from "./util.js";
 
 const MANIFEST_URL = "data/manifest.json";
 const CARDS_URL = "data/cards.json";
+const WORK_URL = "data/work.json";
 
 /** Fetch a JSON file and fail loudly on HTTP errors. */
 async function fetchJson(url) {
@@ -12,9 +13,13 @@ async function fetchJson(url) {
   return response.json();
 }
 
-/** Load manifest and cards; a missing file results in an empty store. */
+/** Load manifest, cards and work data; a missing file results in an empty store. */
 export async function loadStore() {
-  const store = { manifest: { docs: [], builtAt: "", buildId: "" }, cards: [], pages: new Map(), loadedDocs: 0 };
+  const store = {
+    manifest: { docs: [], builtAt: "", buildId: "" }, cards: [],
+    work: { tasks: [], events: [] },   // 업무 카드와 일정 (work/ 폴더에서 빌드됨)
+    pages: new Map(), loadedDocs: 0,
+  };
   try {
     store.manifest = await fetchJson(MANIFEST_URL);
   } catch (error) {
@@ -24,6 +29,11 @@ export async function loadStore() {
     store.cards = await fetchJson(CARDS_URL);
   } catch (error) {
     console.warn("cards not available", error);
+  }
+  try {
+    store.work = await fetchJson(WORK_URL);
+  } catch (error) {
+    console.warn("work data not available", error);
   }
   return store;
 }

@@ -20,6 +20,8 @@ import unicodedata
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+from build_work import build_work
+
 ROOT = Path(__file__).resolve().parent.parent
 LIBRARY_DIR = ROOT / "library"
 TERMS_DIR = ROOT / "terms"
@@ -180,7 +182,7 @@ def build_cards(cards, documents):
     return cards, failures
 
 
-def write_site(documents, cards):
+def write_site(documents, cards, work):
     """Write the final static site into site/."""
     if SITE_DIR.exists():
         shutil.rmtree(SITE_DIR)
@@ -209,6 +211,7 @@ def write_site(documents, cards):
     data_dir = SITE_DIR / "data"
     (data_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
     (data_dir / "cards.json").write_text(json.dumps(cards, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    (data_dir / "work.json").write_text(json.dumps(work, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     service_worker = SITE_DIR / "sw.js"
     service_worker.write_text(service_worker.read_text(encoding="utf-8").replace("__BUILD_ID__", build_id), encoding="utf-8")
     print(f"[site] built {SITE_DIR} (build {build_id})")
@@ -218,7 +221,9 @@ def main():
     strict = "--strict" in sys.argv
     documents = collect_documents()
     cards, failures = build_cards(load_cards(), documents)
-    write_site(documents, cards)
+    work, work_failures = build_work(documents, cards)
+    write_site(documents, cards, work)
+    failures += work_failures
     if strict and failures:
         sys.exit(1)
 

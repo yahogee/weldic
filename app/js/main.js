@@ -1,11 +1,24 @@
-/* App entry: wires the search box, result list, detail view and document panel. */
+/* App entry: wires the search box, tabs, result lists, detail view and document panel. */
 import { loadStore, loadAllPages } from "./data.js";
 import { searchCards, searchPages, tokenize } from "./search.js";
 import { el, cardRow, pageRow, cardDetail, pageDetail, docsPanel, buildHighlightRegex } from "./render.js";
+import { createOpenList } from "./openlist.js";
+import { toSearchShapes } from "./work-data.js";
+import { taskRow, taskDetail, todayView, calendarView, tasksView } from "./work-render.js";
+import { memoView } from "./memo.js";
 
 const WIDE_QUERY = "(min-width: 900px)";
 const PAGE_BATCH = 20;          // page hits shown per "more" click
 const SEARCH_DELAY_MS = 120;    // debounce for typing
+// 검색창 아래에 보이는 탭 목록: 앱을 처음 열면 맨 앞의 "오늘"이 보임
+const TABS = [
+  { id: "today", label: "오늘" },
+  { id: "calendar", label: "달력" },
+  { id: "tasks", label: "업무" },
+  { id: "terms", label: "용어" },
+  { id: "memo", label: "메모" },
+];
+const DEFAULT_TAB = TABS[0].id;
 
 const store = await loadStore();
 const wide = window.matchMedia(WIDE_QUERY);
@@ -18,47 +31,15 @@ const docsButton = document.getElementById("docsBtn");
 const docsView = document.getElementById("docsView");
 const mainView = document.getElementById("mainView");
 const footerInfo = document.getElementById("footerInfo");
+const tabBar = document.getElementById("tabs");
 
-let current = { tokens: [], regex: null, cardMatches: [], pageResult: { hits: [], total: 0 }, shownPages: PAGE_BATCH };
-let openItem = null;   // { element, render } for the currently opened result
+// 목록 항목을 "그 자리에서 열고 다른 건 닫는" 공통 기능 (모든 탭이 같이 씀)
+const { makeItem, closeOpen } = createOpenList(detailPane, wide);
+// 업무 카드를 기존 검색 엔진이 이해하는 모양으로 한 번만 변환해 둠
+const taskShapes = toSearchShapes(store.work.tasks);
 
-/** Close whichever result is currently open. */
-function closeOpen() {
-  if (!openItem) return;
-  openItem.element.classList.remove("open");
-  const inline = openItem.element.querySelector(".detail");
-  if (inline) inline.replaceChildren();
-  detailPane.replaceChildren();
-  detailPane.classList.remove("filled");
-  openItem = null;
-}
-
-/** Show the detail of one result: beside the list on PC, in place on phones. */
-function openResult(element, renderDetail) {
-  const wasOpen = openItem && openItem.element === element;
-  closeOpen();
-  if (wasOpen) return;
-  element.classList.add("open");
-  openItem = { element, render: renderDetail };
-  if (wide.matches) {
-    detailPane.replaceChildren(renderDetail());
-    detailPane.classList.add("filled");
-  } else {
-    element.querySelector(".detail").replaceChildren(renderDetail());
-    element.scrollIntoView({ block: "start", behavior: "smooth" });
-  }
-}
-
-/** Build one list item with a button row and an in-place detail area. */
-function makeItem(rowNode, renderDetail) {
-  const item = el("li", "item");
-  const button = el("button", "row");
-  button.type = "button";
-  button.append(rowNode);
-  button.addEventListener("click", () => openResult(item, renderDetail));
-  item.append(button, el("div", "detail"));
-  return item;
-}
+let activeTab = DEFAULT_TAB;
+let current = { tokens: [], regex: null, taskMatches: [], cardMatches: [], pageResult: { hits: [], total: 0 }, shownPages: PAGE_BATCH };
 
 /** Render the list of page hits (with a "more" button). */
 function renderPageHits(list, moreHolder) {
@@ -79,12 +60,10 @@ function renderPageHits(list, moreHolder) {
   }
 }
 
-/** Home view (no query): list every card, or the empty state. */
-function renderHome() {
-  results.replaceChildren();
+/** "용어" tab: list every card, or the empty state. */
+function renderTerms() {
   if (store.cards.length === 0 && store.manifest.docs.length === 0) {
     results.append(el("p", "empty", "자료가 없어요"));
-    statusLine.textContent = "";
     return;
   }
   statusLine.textContent = store.manifest.docs.length > 0
@@ -99,6 +78,22 @@ function renderHome() {
   results.append(list);
 }
 
+/** Draw the screen of one tab (called when no search text is typed). */
+function renderTab(tabId) {
+  closeOpen();
+  activeTab = tabId;
+  results.replaceChildren();
+  statusLine.textContent = "";
+  tabBar.classList.remove("searching");
+  tabBar.querySelectorAll(".tab").forEach((button) => button.setAttribute("aria-selected", String(button.dataset.tab === tabId)));
+  const today = new Date();
+  if (tabId === "today") results.append(todayView(store, today, makeItem));
+  else if (tabId === "calendar") results.append(calendarView(store, today, makeItem, closeOpen));
+  else if (tabId === "tasks") results.append(tasksView(store, makeItem));
+  else if (tabId === "terms") renderTerms();
+  else if (tabId === "memo") results.append(memoView({ makeItem, closeOpen }));
+}
+
 /** Run a search for the current input value and draw the results. */
 function runSearch() {
   closeOpen();
@@ -106,20 +101,31 @@ function runSearch() {
   clearButton.hidden = query.length === 0;
   const tokens = tokenize(query);
   if (tokens.length === 0) {
-    renderHome();
+    renderTab(activeTab);
     return;
   }
   current = {
     tokens, regex: buildHighlightRegex(tokens),
+    taskMatches: searchCards(taskShapes, query).map((shape) => shape.ref),
     cardMatches: searchCards(store.cards, query),
     pageResult: searchPages(store, query), shownPages: PAGE_BATCH,
   };
   results.replaceChildren();
+  tabBar.classList.add("searching");
   const loading = store.loadedDocs < store.manifest.docs.length;
-  statusLine.textContent = `용어 카드 ${current.cardMatches.length}건 · 문서 ${current.pageResult.total}쪽${loading ? " (자료 불러오는 중…)" : ""}`;
-  if (current.cardMatches.length === 0 && current.pageResult.total === 0) {
+  const total = current.taskMatches.length + current.cardMatches.length + current.pageResult.total;
+  statusLine.textContent = `업무 카드 ${current.taskMatches.length}건 · 용어 카드 ${current.cardMatches.length}건 · 문서 ${current.pageResult.total}쪽${loading ? " (자료 불러오는 중…)" : ""}`;
+  if (total === 0) {
     results.append(el("p", "empty", loading ? "자료를 불러오는 중이에요. 잠시 후 다시 확인하세요" : "찾는 내용이 없어요. 다른 단어로 검색해 보세요"));
     return;
+  }
+  if (current.taskMatches.length > 0) {
+    results.append(el("h2", "section-title", "업무 카드"));
+    const taskList = el("ul", "list");
+    current.taskMatches.forEach((task) => {
+      taskList.append(makeItem(taskRow(task), () => taskDetail(task, store, current.regex)));
+    });
+    results.append(taskList);
   }
   if (current.cardMatches.length > 0) {
     results.append(el("h2", "section-title", "용어 카드"));
@@ -136,6 +142,22 @@ function runSearch() {
     results.append(pageList, moreHolder);
     renderPageHits(pageList, moreHolder);
   }
+}
+
+/** Build the tab buttons. Tapping a tab clears the search and shows that tab. */
+function buildTabs() {
+  TABS.forEach((tab) => {
+    const button = el("button", "tab", tab.label);
+    button.type = "button";
+    button.dataset.tab = tab.id;
+    button.setAttribute("role", "tab");
+    button.addEventListener("click", () => {
+      input.value = "";
+      clearButton.hidden = true;
+      renderTab(tab.id);
+    });
+    tabBar.append(button);
+  });
 }
 
 /** Toggle between the search view and the document list view. */
@@ -158,16 +180,10 @@ clearButton.addEventListener("click", () => {
   input.focus();
 });
 docsButton.addEventListener("click", toggleDocs);
-// Re-render the open detail in the right place when the window width class changes.
-wide.addEventListener("change", () => {
-  if (!openItem) return;
-  const { element, render } = openItem;
-  closeOpen();
-  openResult(element, render);
-});
 
 footerInfo.textContent = store.manifest.builtAt ? `자료 갱신 ${store.manifest.builtAt}` : "";
-renderHome();
+buildTabs();
+renderTab(DEFAULT_TAB);
 loadAllPages(store, () => {
   if (input.value.trim()) runSearch();   // refresh results as more documents arrive
 });

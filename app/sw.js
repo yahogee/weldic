@@ -4,7 +4,8 @@ const CACHE_NAME = "weldic-__BUILD_ID__";
 const SHELL_FILES = [
   "./", "index.html", "css/style.css", "manifest.webmanifest",
   "js/main.js", "js/util.js", "js/data.js", "js/search.js", "js/render.js",
-  "data/manifest.json", "data/cards.json",
+  "js/openlist.js", "js/work-data.js", "js/schedule.js", "js/work-render.js", "js/memo.js",
+  "data/manifest.json", "data/cards.json", "data/work.json",
 ];
 
 // Pre-cache the app shell on install.

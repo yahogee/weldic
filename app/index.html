@@ -22,8 +22,11 @@
   <main>
     <div id="mainView">
       <div class="searchbox">
-        <input id="q" type="search" inputmode="search" placeholder="용어나 단어를 입력하세요" autocomplete="off" aria-label="검색">
-        <button id="clearBtn" class="clear" type="button" hidden aria-label="지우기">✕</button>
+        <div class="searchrow">
+          <input id="q" type="search" inputmode="search" placeholder="업무·용어·법령을 검색하세요" autocomplete="off" aria-label="검색">
+          <button id="clearBtn" class="clear" type="button" hidden aria-label="지우기">✕</button>
+        </div>
+        <nav id="tabs" class="tabs" role="tablist" aria-label="화면 선택"></nav>
       </div>
       <p id="status" class="status"></p>
       <div class="layout">

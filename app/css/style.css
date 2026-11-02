@@ -1,14 +1,14 @@
 /* weldic styles: one column on phones, list + detail on wide screens. */
 :root {
   --bg: #ffffff; --surface: #f4f6fa; --text: #1b2430; --muted: #5a6575;
-  --accent: var(--accent); --accent-text: #ffffff; --line: #d9dfe8;
+  --accent: #1e5ea8; --accent-text: #ffffff; --sun: #c0392b; --line: #d9dfe8;
   --ok-bg: #e3f4e8; --ok-text: #1d6b34; --warn-bg: #fff1d6; --warn-text: #8a5a00;
   --mark: #ffe58a; --banner-bg: #fff8e1; --banner-text: #6b4e00;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #12161c; --surface: #1c232d; --text: #e8edf3; --muted: #9aa7b8;
-    --accent: #6aa6ea; --accent-text: #0b1522; --line: #2e3846;
+    --accent: #6aa6ea; --accent-text: #0b1522; --sun: #ff8a80; --line: #2e3846;
     --ok-bg: #173424; --ok-text: #7fd39a; --warn-bg: #3a2c0c; --warn-text: #f1c36a;
     --mark: #6b5a12; --banner-bg: #2b2410; --banner-text: #f1d58a;
   }
@@ -69,7 +69,7 @@ footer p { margin: 2px 0; }
 
 @media (min-width: 900px) {
   .layout { display: grid; grid-template-columns: minmax(320px, 2fr) 3fr; gap: 20px; align-items: start; }
-  #detailPane { display: block; position: sticky; top: 88px; max-height: calc(100vh - 100px); overflow-y: auto; border: 1px solid var(--line); border-radius: 12px; padding: 4px 18px 18px; min-height: 120px; }
+  #detailPane { display: block; position: sticky; top: 150px; max-height: calc(100vh - 162px); overflow-y: auto; border: 1px solid var(--line); border-radius: 12px; padding: 4px 18px 18px; min-height: 120px; }
   #detailPane:not(.filled)::before { content: "왼쪽에서 항목을 누르면 여기에 내용이 나와요"; display: block; color: var(--muted); padding: 40px 0; text-align: center; }
   .item.open { background: var(--surface); }
 }
@@ -80,4 +80,54 @@ footer p { margin: 2px 0; }
 .related-chip:hover, .related-chip:focus-visible { border-color: var(--accent); color: var(--accent); }
 
 /* Keep opened results clear of the fixed search bar when scrolled into view */
-.item { scroll-margin-top: 84px; }
+.item { scroll-margin-top: 150px; }
+
+/* ---- Work manual screens (tabs, today, calendar, memo) ---- */
+
+/* 검색창 줄: 지우기 버튼이 입력창 안쪽에 겹치도록 기준 위치를 잡음 */
+.searchrow { position: relative; }
+
+/* 탭 바: 검색창 바로 아래에 같이 고정됨 */
+.tabs { display: flex; gap: 2px; margin-top: 6px; }
+.tab { flex: 1; min-height: 44px; padding: 6px 2px; font: inherit; font-size: .95rem; color: var(--muted); background: none; border: 0; border-bottom: 3px solid transparent; cursor: pointer; }
+.tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+.tabs.searching .tab[aria-selected="true"] { color: var(--muted); border-bottom-color: transparent; font-weight: 400; }
+
+/* 오늘 화면 */
+.today-date { font-size: 1.15rem; margin: 8px 0 4px; }
+.prep-box { background: var(--warn-bg); color: var(--warn-text); border-radius: 12px; padding: 4px 12px 8px; margin: 8px 0; }
+.prep-box h3 { margin: 8px 0; font-size: .95rem; }
+.prep-box .item { color: var(--text); }
+.chip.dday { background: var(--warn-bg); color: var(--warn-text); border-color: transparent; font-weight: 700; }
+
+/* 업무 카드 상세 */
+.steps { margin: 4px 0; padding-left: 1.4em; }
+.steps li { margin: 4px 0; word-break: break-word; }
+.plain-list { margin: 4px 0; padding-left: 1.2em; }
+.plain-list li { margin: 3px 0; word-break: break-word; }
+.back { margin: 8px 0 0; }
+.linked.has-child > .back { display: none; }
+
+/* 달력 */
+.cal-head { display: flex; align-items: center; gap: 4px; margin: 8px 0; }
+.cal-title { flex: 1; text-align: center; font-size: 1.1rem; }
+.cal-nav { width: 44px; height: 44px; font-size: 1.4rem; background: none; border: 1px solid var(--line); border-radius: 10px; color: var(--text); cursor: pointer; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-wd { text-align: center; font-size: .8rem; color: var(--muted); padding: 2px 0; }
+.sun { color: var(--sun); }
+.day { position: relative; min-height: 46px; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+.day.sun { color: var(--sun); }
+.day.today { border-color: var(--accent); border-width: 2px; font-weight: 700; }
+.day.selected { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.dot { position: absolute; left: 50%; bottom: 5px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--accent); }
+.day.selected .dot { background: var(--accent-text); }
+
+/* 메모 */
+.warn-box { background: var(--warn-bg); color: var(--warn-text); border-radius: 12px; padding: 10px 14px; font-size: .9rem; margin: 8px 0; }
+.memo-input { width: 100%; font: inherit; padding: 10px; border: 2px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); resize: vertical; }
+.memo-input:focus { outline: none; border-color: var(--accent); }
+.button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn.danger { border-color: var(--sun); color: var(--sun); }
+.add-memo { margin: 4px 0 8px; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: 90vw; padding: 10px 16px; border-radius: 999px; background: var(--text); color: var(--bg); font-size: .9rem; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 30; }
+.toast.show { opacity: 1; }
