@@ -1,0 +1,98 @@
+[
+ {
+  "id": "real-ev-01",
+  "title": "맞춤형복지차량 전기충전 요금 납부",
+  "rule": {
+   "type": "monthly_day",
+   "day": 1
+  },
+  "lead_days": 0,
+  "prep": "매달 초 담당자 메일로 고지서가 오면 납부 (정확한 날짜는 매뉴얼에 없어 매달 1일로 임시 표시)",
+  "task": "real-task-01"
+ },
+ {
+  "id": "real-ev-02",
+  "title": "모니터상담 25건 입력",
+  "rule": {
+   "type": "monthly_any"
+  },
+  "task": "real-task-02"
+ },
+ {
+  "id": "real-ev-03",
+  "title": "통합사례관리비 대상자 선정·지출 마감",
+  "rule": {
+   "type": "date",
+   "date": "2026-12-31"
+  },
+  "lead_days": 60,
+  "prep": "연말까지 선정해서 지출해야 함 (1인 최대 100만원)",
+  "task": "real-task-06"
+ },
+ {
+  "id": "real-ev-04",
+  "title": "이웃돕기 집중기간",
+  "rule": {
+   "type": "period",
+   "from_month": 12,
+   "from_day": 1,
+   "to_month": 1,
+   "to_day": 31
+  },
+  "note": "이 기간 밖에 기탁하면 매칭금(기탁금액의 30% 적립)을 줌",
+  "task": "real-task-09"
+ },
+ {
+  "id": "real-ev-05",
+  "title": "지역사회보장협의체 4분기 회의",
+  "rule": {
+   "type": "date",
+   "date": "2026-12-01"
+  },
+  "lead_days": 14,
+  "prep": "신규 위원 위촉이 있으면 회의 전에 복지정책과에 위촉 공문을 보내 위촉장을 받아야 함. 회의실 예약, 음료수, 명패, 마이크 등 준비",
+  "task": "real-task-24"
+ },
+ {
+  "id": "real-ev-06",
+  "title": "동절기 연료비 추가 지원 기간 (긴급복지)",
+  "rule": {
+   "type": "period",
+   "from_month": 11,
+   "from_day": 1,
+   "to_month": 3,
+   "to_day": 31
+  },
+  "note": "올해는 11월~3월 지원된다고 함. 연료비 15만원 추가 지원 가능",
+  "task": "real-task-18"
+ },
+ {
+  "id": "real-ev-07",
+  "title": "복지사각지대 발굴대상자 목록 처리 (두 달에 한 번쯤)",
+  "rule": {
+   "type": "monthly_any"
+  },
+  "task": "real-task-11"
+ },
+ {
+  "id": "real-ev-08",
+  "title": "사례기록부 제출 (안부확인 특이사항 없음)",
+  "rule": {
+   "type": "monthly_any"
+  },
+  "task": "real-task-32"
+ },
+ {
+  "id": "real-ev-09",
+  "title": "찾아가는 이미용봉사 (매월 셋째 주 화요일, 변동 가능)",
+  "rule": {
+   "type": "monthly_nth_weekday",
+   "nth": 3,
+   "weekday": "화"
+  },
+  "lead_days": 7,
+  "prep": "통장회의 등으로 희망 경로당을 받아 일정 조율, 현수막·협의체 조끼·음료수·테이프 준비",
+  "note": "일정은 변동될 수 있음",
+  "task": "real-task-25"
+ }
+]
