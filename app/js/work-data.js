@@ -29,3 +29,31 @@ export function toSearchShapes(tasks) {
     ref: task,
   }));
 }
+
+/** Look up a call type by id. */
+export function findCallType(types, id) {
+  return types.find((type) => type.id === id) || null;
+}
+
+/** Wrap call types and real cases in the shape searchCards() understands.
+    The caller's own (clumsy) wording is searchable: "heard" phrases count as aliases. */
+export function toCallSearchShapes(calls) {
+  const typeShapes = calls.types.map((type) => ({
+    term: type.title,
+    aliases: [...type.heard, ...(type.aliases || [])],
+    system: type.category,
+    quote: type.real_need,
+    gloss: [...(type.ask || []), ...(type.check || []), ...(type.say || [])].join(" "),
+    ref: { kind: "type", item: type },
+  }));
+  const caseShapes = calls.cases.map((entry) => ({
+    term: entry.title,
+    aliases: [entry.heard],
+    system: "전화 사례",
+    quote: entry.real_need,
+    gloss: [entry.what_happened || "", entry.lesson].join(" "),
+    ref: { kind: "case", item: entry },
+  }));
+  return [...typeShapes, ...caseShapes];
+}
+

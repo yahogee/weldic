@@ -131,3 +131,17 @@ footer p { margin: 2px 0; }
 .add-memo { margin: 4px 0 8px; }
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: 90vw; padding: 10px 16px; border-radius: 999px; background: var(--text); color: var(--bg); font-size: .9rem; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 30; }
 .toast.show { opacity: 1; }
+
+/* 전화 탭: 응대 카드, 연습 모드 */
+.practice-start { display: block; width: 100%; margin: 12px 0 4px; font-weight: 700; }
+.quiz-phrase { font-size: 1.1rem; margin: 8px 0 12px; }
+.quiz-options { display: grid; gap: 8px; }
+.quiz-option { text-align: left; font: inherit; padding: 12px 14px; min-height: 48px; border: 2px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--text); cursor: pointer; }
+.quiz-option:hover:not(:disabled), .quiz-option:focus-visible { border-color: var(--accent); }
+.quiz-option:disabled { cursor: default; }
+.quiz-option.correct { border-color: var(--ok-text); background: var(--ok-bg); color: var(--ok-text); font-weight: 700; }
+.quiz-option.wrong { border-color: var(--sun); color: var(--sun); }
+.quiz-feedback { margin-top: 12px; }
+.quiz-verdict { font-weight: 700; margin: 4px 0; }
+.quiz-feedback h3 { font-size: .95rem; color: var(--accent); margin: 12px 0 4px; }
+

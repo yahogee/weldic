@@ -20,6 +20,7 @@ import unicodedata
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+from build_calls import build_calls
 from build_work import build_work
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -222,6 +223,8 @@ def main():
     documents = collect_documents()
     cards, failures = build_cards(load_cards(), documents)
     work, work_failures = build_work(documents, cards)
+    work["calls"], call_failures = build_calls(work["tasks"], cards)
+    work_failures += call_failures
     write_site(documents, cards, work)
     failures += work_failures
     if strict and failures:

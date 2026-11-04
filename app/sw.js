@@ -5,6 +5,7 @@ const SHELL_FILES = [
   "./", "index.html", "css/style.css", "manifest.webmanifest",
   "js/main.js", "js/util.js", "js/data.js", "js/search.js", "js/render.js",
   "js/openlist.js", "js/work-data.js", "js/schedule.js", "js/work-render.js", "js/memo.js",
+  "js/call-render.js", "js/practice.js",
   "data/manifest.json", "data/cards.json", "data/work.json",
 ];
 

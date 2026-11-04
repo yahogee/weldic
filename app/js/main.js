@@ -3,9 +3,11 @@ import { loadStore, loadAllPages } from "./data.js";
 import { searchCards, searchPages, tokenize } from "./search.js";
 import { el, cardRow, pageRow, cardDetail, pageDetail, docsPanel, buildHighlightRegex } from "./render.js";
 import { createOpenList } from "./openlist.js";
-import { toSearchShapes } from "./work-data.js";
+import { toSearchShapes, toCallSearchShapes } from "./work-data.js";
 import { taskRow, taskDetail, todayView, calendarView, tasksView } from "./work-render.js";
 import { memoView } from "./memo.js";
+import { callRow, callDetail, caseDetail, callsView } from "./call-render.js";
+import { practiceView } from "./practice.js";
 
 const WIDE_QUERY = "(min-width: 900px)";
 const PAGE_BATCH = 20;          // page hits shown per "more" click
@@ -13,10 +15,10 @@ const SEARCH_DELAY_MS = 120;    // debounce for typing
 // 검색창 아래에 보이는 탭 목록: 앱을 처음 열면 맨 앞의 "오늘"이 보임
 const TABS = [
   { id: "today", label: "오늘" },
-  { id: "calendar", label: "달력" },
+  { id: "calls", label: "전화" },
   { id: "tasks", label: "업무" },
+  { id: "calendar", label: "달력·메모" },   // 달력 아래에 메모를 함께 둠
   { id: "terms", label: "용어" },
-  { id: "memo", label: "메모" },
 ];
 const DEFAULT_TAB = TABS[0].id;
 
@@ -37,9 +39,10 @@ const tabBar = document.getElementById("tabs");
 const { makeItem, closeOpen } = createOpenList(detailPane, wide);
 // 업무 카드를 기존 검색 엔진이 이해하는 모양으로 한 번만 변환해 둠
 const taskShapes = toSearchShapes(store.work.tasks);
+const callShapes = toCallSearchShapes(store.work.calls);
 
 let activeTab = DEFAULT_TAB;
-let current = { tokens: [], regex: null, taskMatches: [], cardMatches: [], pageResult: { hits: [], total: 0 }, shownPages: PAGE_BATCH };
+let current = { tokens: [], regex: null, callMatches: [], taskMatches: [], cardMatches: [], pageResult: { hits: [], total: 0 }, shownPages: PAGE_BATCH };
 
 /** Render the list of page hits (with a "more" button). */
 function renderPageHits(list, moreHolder) {
@@ -88,10 +91,22 @@ function renderTab(tabId) {
   tabBar.querySelectorAll(".tab").forEach((button) => button.setAttribute("aria-selected", String(button.dataset.tab === tabId)));
   const today = new Date();
   if (tabId === "today") results.append(todayView(store, today, makeItem));
-  else if (tabId === "calendar") results.append(calendarView(store, today, makeItem, closeOpen));
-  else if (tabId === "tasks") results.append(tasksView(store, makeItem));
+  else if (tabId === "calls") renderCalls();
+  else if (tabId === "calendar") {
+    results.append(calendarView(store, today, makeItem, closeOpen));
+    results.append(el("h2", "section-title", "메모"), memoView({ makeItem, closeOpen }));
+  } else if (tabId === "tasks") results.append(tasksView(store, makeItem));
   else if (tabId === "terms") renderTerms();
-  else if (tabId === "memo") results.append(memoView({ makeItem, closeOpen }));
+}
+
+/** "전화" tab: call list, or the practice mode when the practice button was pressed. */
+function renderCalls() {
+  results.replaceChildren();
+  results.append(callsView(store, makeItem, () => {
+    closeOpen();
+    results.replaceChildren(practiceView(store, renderCalls));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }));
 }
 
 /** Run a search for the current input value and draw the results. */
@@ -106,6 +121,7 @@ function runSearch() {
   }
   current = {
     tokens, regex: buildHighlightRegex(tokens),
+    callMatches: searchCards(callShapes, query).map((shape) => shape.ref),
     taskMatches: searchCards(taskShapes, query).map((shape) => shape.ref),
     cardMatches: searchCards(store.cards, query),
     pageResult: searchPages(store, query), shownPages: PAGE_BATCH,
@@ -113,11 +129,20 @@ function runSearch() {
   results.replaceChildren();
   tabBar.classList.add("searching");
   const loading = store.loadedDocs < store.manifest.docs.length;
-  const total = current.taskMatches.length + current.cardMatches.length + current.pageResult.total;
-  statusLine.textContent = `업무 카드 ${current.taskMatches.length}건 · 용어 카드 ${current.cardMatches.length}건 · 문서 ${current.pageResult.total}쪽${loading ? " (자료 불러오는 중…)" : ""}`;
+  const total = current.callMatches.length + current.taskMatches.length + current.cardMatches.length + current.pageResult.total;
+  statusLine.textContent = `전화 응대 ${current.callMatches.length}건 · 업무 카드 ${current.taskMatches.length}건 · 용어 카드 ${current.cardMatches.length}건 · 문서 ${current.pageResult.total}쪽${loading ? " (자료 불러오는 중…)" : ""}`;
   if (total === 0) {
     results.append(el("p", "empty", loading ? "자료를 불러오는 중이에요. 잠시 후 다시 확인하세요" : "찾는 내용이 없어요. 다른 단어로 검색해 보세요"));
     return;
+  }
+  if (current.callMatches.length > 0) {
+    results.append(el("h2", "section-title", "전화 응대"));
+    const callList = el("ul", "list");
+    current.callMatches.forEach((ref) => {
+      const detail = ref.kind === "case" ? () => caseDetail(ref.item, store, current.regex) : () => callDetail(ref.item, store, current.regex);
+      callList.append(makeItem(callRow(ref), detail));
+    });
+    results.append(callList);
   }
   if (current.taskMatches.length > 0) {
     results.append(el("h2", "section-title", "업무 카드"));

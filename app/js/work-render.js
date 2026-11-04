@@ -12,7 +12,7 @@ const WEEKDAY_HEADERS = ["일", "월", "화", "수", "목", "금", "토"];
 const SAMPLE_BADGE_TEXT = "예시";
 
 /** Create an element whose text can be highlighted for search matches. */
-function textElement(tag, className, text, regex) {
+export function textElement(tag, className, text, regex) {
   const node = el(tag, className);
   appendHighlighted(node, text, regex);
   return node;
@@ -24,7 +24,7 @@ function sampleBadge() {
 }
 
 /** Replace a detail with a linked one (term card, law article, task card) and a back button. */
-function showLinked(box, linkedNode) {
+export function showLinked(box, linkedNode) {
   const wrapper = el("div", "linked");
   // 이미 연결 화면 안에서 또 연결로 들어가면, 바깥쪽 돌아가기 버튼은 잠시 숨겨서 버튼이 겹쳐 보이지 않게 함
   const parent = box.closest(".linked");
@@ -56,7 +56,7 @@ export function taskRow(task) {
 }
 
 /** Buttons that jump to the term cards and law articles linked from a task card. */
-function linkedChips(task, store, box) {
+export function linkedChips(task, store, box) {
   const chips = el("div", "related");
   const hint = el("p", "note");
   for (const id of task.terms || []) {

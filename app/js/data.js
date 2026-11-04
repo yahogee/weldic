@@ -17,7 +17,7 @@ async function fetchJson(url) {
 export async function loadStore() {
   const store = {
     manifest: { docs: [], builtAt: "", buildId: "" }, cards: [],
-    work: { tasks: [], events: [] },   // 업무 카드와 일정 (work/ 폴더에서 빌드됨)
+    work: { tasks: [], events: [], calls: { frame: null, types: [], cases: [] } },   // 업무 카드·일정·전화 응대 (work/ 폴더에서 빌드됨)
     pages: new Map(), loadedDocs: 0,
   };
   try {
@@ -32,6 +32,8 @@ export async function loadStore() {
   }
   try {
     store.work = await fetchJson(WORK_URL);
+    // 전화 응대 데이터가 없는 예전 work.json도 깨지지 않게 기본값을 채움
+    store.work.calls = store.work.calls || { frame: null, types: [], cases: [] };
   } catch (error) {
     console.warn("work data not available", error);
   }
