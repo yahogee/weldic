@@ -114,6 +114,8 @@ def clean_task(task, card_ids, docs_by_file):
         problems.append("basis_date must be YYYY-MM-DD")
     if "steps_title" in task and not is_text(task["steps_title"]):
         problems.append("steps_title must be text")
+    if "note" in task and not is_text(task["note"]):
+        problems.append("note must be text")
     for field in ("aliases", "menu_paths", "cautions"):
         value = task.get(field, [])
         if not (isinstance(value, list) and all(is_text(v) for v in value)):

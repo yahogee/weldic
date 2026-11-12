@@ -10,6 +10,7 @@ import {
 const SUNDAY_COLUMN = 0;                 // 달력에서 일요일 칸의 번호
 const WEEKDAY_HEADERS = ["일", "월", "화", "수", "목", "금", "토"];
 const SAMPLE_BADGE_TEXT = "예시";
+const DEFAULT_TASK_NOTE = "업무 매뉴얼을 정리한 참고용이에요. 금액·기준은 해마다 바뀔 수 있으니 기준일을 보고, 최신 공문과 담당자 안내로 확인하세요.";
 
 /** Create an element whose text can be highlighted for search matches. */
 export function textElement(tag, className, text, regex) {
@@ -123,7 +124,8 @@ export function taskDetail(task, store, regex = null) {
     box.append(el("h3", "", "같이 볼 용어·법령"), ...linked);
   }
   box.append(el("p", "source", `출처: ${task.source || "업무 매뉴얼"}`));
-  box.append(el("p", "note", "업무 매뉴얼을 정리한 참고용이에요. 금액·기준은 해마다 바뀔 수 있으니 기준일을 보고, 최신 공문과 담당자 안내로 확인하세요."));
+  // task.note: 카드마다 안내문을 따로 지정할 수 있음 (없으면 업무 매뉴얼용 기본 안내문)
+  box.append(el("p", "note", task.note || DEFAULT_TASK_NOTE));
   return box;
 }
 
