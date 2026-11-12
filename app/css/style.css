@@ -103,6 +103,8 @@ footer p { margin: 2px 0; }
 /* 업무 카드 상세 */
 .steps { margin: 4px 0; padding-left: 1.4em; }
 .steps li { margin: 4px 0; word-break: break-word; }
+.fold-toggle { display: inline-block; font: inherit; font-size: .9rem; padding: 4px 12px; min-height: 36px; border-radius: 999px; border: 1px solid var(--accent); background: var(--bg); color: var(--accent); cursor: pointer; }
+.fold-toggle:hover, .fold-toggle:focus-visible { background: var(--surface); }
 .plain-list { margin: 4px 0; padding-left: 1.2em; }
 .plain-list li { margin: 3px 0; word-break: break-word; }
 .back { margin: 8px 0 0; }

@@ -137,6 +137,7 @@ def build_card(item):
         "source": source,
         "note": CARD_NOTE,
         "basis_date": BASIS_DATE,
+        "fold_long": True,                      # the app folds long items ("전체 보기" button)
     }
 
 

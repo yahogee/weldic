@@ -10,6 +10,11 @@ import {
 const SUNDAY_COLUMN = 0;                 // 달력에서 일요일 칸의 번호
 const WEEKDAY_HEADERS = ["일", "월", "화", "수", "목", "금", "토"];
 const SAMPLE_BADGE_TEXT = "예시";
+const FOLD_MIN_CHARS = 200;              // 이 글자 수를 넘는 항목만 접어서 보여 줌 (fold_long 카드에 한해)
+const FOLD_PREVIEW_CHARS = 150;          // 접었을 때 보여 줄 앞부분 글자 수
+const FOLD_LINE_JOINER = " / ";          // 원문 줄바꿈을 이은 구분자 (가능하면 이 위치에서 자름)
+const FOLD_OPEN_LABEL = "전체 보기";
+const FOLD_CLOSE_LABEL = "접기";
 const DEFAULT_TASK_NOTE = "업무 매뉴얼을 정리한 참고용이에요. 금액·기준은 해마다 바뀔 수 있으니 기준일을 보고, 최신 공문과 담당자 안내로 확인하세요.";
 
 /** Create an element whose text can be highlighted for search matches. */
@@ -17,6 +22,38 @@ export function textElement(tag, className, text, regex) {
   const node = el(tag, className);
   appendHighlighted(node, text, regex);
   return node;
+}
+
+/** Front part of a long text: cut at the last line separator inside the limit, else at the limit. */
+export function foldPreview(text) {
+  const head = text.slice(0, FOLD_PREVIEW_CHARS);
+  const cut = head.lastIndexOf(FOLD_LINE_JOINER);
+  return `${(cut > 0 ? head.slice(0, cut) : head).trimEnd()} …`;
+}
+
+/** A list item whose long text is folded to its front part; the button opens/closes it in place.
+    A search match inside the hidden part opens it right away so the match is visible. */
+function foldableItem(text, regex) {
+  const item = el("li", "");
+  if (text.length <= FOLD_MIN_CHARS) {
+    appendHighlighted(item, text, regex);
+    return item;
+  }
+  const preview = textElement("span", "fold-text", foldPreview(text), regex);
+  const full = textElement("span", "fold-text", text, regex);
+  const toggle = el("button", "fold-toggle", FOLD_OPEN_LABEL);
+  toggle.type = "button";
+  const setOpen = (open) => {
+    preview.hidden = open;
+    full.hidden = !open;
+    toggle.textContent = open ? FOLD_CLOSE_LABEL : FOLD_OPEN_LABEL;
+    toggle.setAttribute("aria-expanded", String(open));
+  };
+  toggle.addEventListener("click", () => setOpen(full.hidden));
+  const matchesSearch = regex ? new RegExp(regex.source, regex.flags.replace("g", "")).test(text) : false;
+  setOpen(matchesSearch);
+  item.append(preview, full, " ", toggle);
+  return item;
 }
 
 /** Small "예시" badge shown on sample data. */
@@ -104,7 +141,8 @@ export function taskDetail(task, store, regex = null) {
   // steps_title: 순서가 아닌 비교·정리 카드는 제목을 바꿔 쓸 수 있음 (기본값 "하는 순서")
   box.append(el("h3", "", task.steps_title || "하는 순서"));
   const steps = el("ol", "steps");
-  task.steps.forEach((step) => steps.append(textElement("li", "", step, regex)));
+  // fold_long: 공공데이터 카드처럼 항목이 긴 카드는 긴 항목을 접어서 보여 줌 (업무 매뉴얼 카드는 그대로)
+  task.steps.forEach((step) => steps.append(task.fold_long ? foldableItem(step, regex) : textElement("li", "", step, regex)));
   box.append(steps);
 
   if ((task.menu_paths || []).length > 0) {

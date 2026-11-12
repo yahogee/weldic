@@ -116,6 +116,8 @@ def clean_task(task, card_ids, docs_by_file):
         problems.append("steps_title must be text")
     if "note" in task and not is_text(task["note"]):
         problems.append("note must be text")
+    if "fold_long" in task and not isinstance(task["fold_long"], bool):
+        problems.append("fold_long must be true or false")
     for field in ("aliases", "menu_paths", "cautions"):
         value = task.get(field, [])
         if not (isinstance(value, list) and all(is_text(v) for v in value)):
