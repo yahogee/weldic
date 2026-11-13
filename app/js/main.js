@@ -34,6 +34,9 @@ const docsView = document.getElementById("docsView");
 const mainView = document.getElementById("mainView");
 const footerInfo = document.getElementById("footerInfo");
 const tabBar = document.getElementById("tabs");
+const searchHint = document.getElementById("searchHint");
+// 검색 중에는 어느 탭에도 선택 표시가 없으므로, 그 이유를 탭 줄 바로 아래에 알려 줌
+const SEARCH_HINT_TEXT = "검색 중 · 모든 탭에서 찾은 결과예요. 탭을 누르면 그 탭으로 돌아가요";
 
 // 목록 항목을 "그 자리에서 열고 다른 건 닫는" 공통 기능 (모든 탭이 같이 씀)
 const { makeItem, closeOpen } = createOpenList(detailPane, wide);
@@ -88,6 +91,7 @@ function renderTab(tabId) {
   results.replaceChildren();
   statusLine.textContent = "";
   tabBar.classList.remove("searching");
+  searchHint.hidden = true;
   tabBar.querySelectorAll(".tab").forEach((button) => button.setAttribute("aria-selected", String(button.dataset.tab === tabId)));
   const today = new Date();
   if (tabId === "today") results.append(todayView(store, today, makeItem));
@@ -128,6 +132,8 @@ function runSearch() {
   };
   results.replaceChildren();
   tabBar.classList.add("searching");
+  searchHint.textContent = SEARCH_HINT_TEXT;
+  searchHint.hidden = false;
   const loading = store.loadedDocs < store.manifest.docs.length;
   const total = current.callMatches.length + current.taskMatches.length + current.cardMatches.length + current.pageResult.total;
   statusLine.textContent = `전화 응대 ${current.callMatches.length}건 · 업무 카드 ${current.taskMatches.length}건 · 용어 카드 ${current.cardMatches.length}건 · 문서 ${current.pageResult.total}쪽${loading ? " (자료 불러오는 중…)" : ""}`;
