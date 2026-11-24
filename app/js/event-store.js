@@ -1,8 +1,9 @@
 /* Storage of the user's own schedule entries ("내 일정").
-   Each entry uses the same rule shape as the work schedule ({ type: "date", date }) so the
-   schedule engine can find the entries of a day and later repeat rules can reuse it.
+   Each entry has a rule: one time { type: "date", date } or repeating { type: "repeat", freq, start, until }
+   (see event-repeat.js), plus time, note, color and a "skip" list of single days left out of a repeat.
    Entries live only in this browser's localStorage and are never sent anywhere. */
-import { pointEventsOn, daysInMonth, parseISODate } from "./schedule.js";
+import { daysInMonth, parseISODate } from "./schedule.js";
+import { occursOn, isRepeatFreq, buildRule } from "./event-repeat.js";
 
 const STORAGE_KEY = "weldic.events.v1";
 export const TITLE_MAX_CHARS = 60;       // 일정 제목 최대 글자 수
@@ -38,10 +39,23 @@ export function isValidDateText(text) {
   return date.getFullYear() === year && date.getMonth() + 1 === month && date.getDate() === day;
 }
 
+/** True when a stored rule is a valid one-time or repeat rule. */
+function isValidRule(rule) {
+  if (!rule) return false;
+  if (rule.type === "date") return isValidDateText(rule.date);
+  return rule.type === "repeat" && isRepeatFreq(rule.freq) && isValidDateText(rule.start)
+    && (!rule.until || isValidDateText(rule.until));
+}
+
 /** True when a stored value looks like a valid entry. */
 function isValidEvent(event) {
   return Boolean(event) && typeof event.id === "string" && typeof event.title === "string" && event.title.trim() !== ""
-    && Boolean(event.rule) && event.rule.type === "date" && isValidDateText(event.rule.date);
+    && isValidRule(event.rule);
+}
+
+/** The rule copied into a clean object. */
+function cleanRule(rule) {
+  return rule.type === "date" ? { type: "date", date: rule.date } : { type: "repeat", freq: rule.freq, start: rule.start, until: rule.until || "" };
 }
 
 /** Read all entries; any storage problem (private mode, blocked data) results in an empty list. */
@@ -52,7 +66,8 @@ export function loadEvents() {
     return parsed.filter(isValidEvent).map((event) => ({
       id: event.id,
       title: event.title,
-      rule: { type: "date", date: event.rule.date },
+      rule: cleanRule(event.rule),
+      skip: Array.isArray(event.skip) ? event.skip.filter(isValidDateText) : [],
       time: typeof event.time === "string" && TIME_PATTERN.test(event.time) ? event.time : "",
       note: typeof event.note === "string" ? event.note : "",
       color: normalizeColor(event.color),
@@ -78,11 +93,12 @@ export function newEventId() {
 }
 
 /** Build an entry object from form values (text is trimmed and shortened to the maximum length). */
-export function buildEvent({ id, title, date, time, note, color }) {
+export function buildEvent({ id, title, date, time, note, color, repeat }) {
   return {
     id: id || newEventId(),
     title: title.trim().slice(0, TITLE_MAX_CHARS),
-    rule: { type: "date", date },
+    rule: buildRule(repeat, date),
+    skip: [],
     time: TIME_PATTERN.test(time || "") ? time : "",
     note: (note || "").trim().slice(0, NOTE_MAX_CHARS),
     color: normalizeColor(color),
@@ -91,7 +107,7 @@ export function buildEvent({ id, title, date, time, note, color }) {
 
 /** Entries of one day: no-time entries first, then by time, then by color order. */
 export function personalEventsOn(events, date) {
-  return pointEventsOn(events, date).sort((a, b) => a.time.localeCompare(b.time) || colorOrder(a.color) - colorOrder(b.color));
+  return events.filter((event) => occursOn(event, date)).sort((a, b) => a.time.localeCompare(b.time) || colorOrder(a.color) - colorOrder(b.color));
 }
 
 /** Map of day number -> entries (color order first, so red is always on top) for a whole month. */
@@ -99,7 +115,7 @@ export function monthEventMap(events, year, month) {
   const map = new Map();
   const length = daysInMonth(year, month);
   for (let day = 1; day <= length; day += 1) {
-    const found = pointEventsOn(events, new Date(year, month - 1, day));
+    const found = events.filter((event) => occursOn(event, new Date(year, month - 1, day)));
     if (found.length > 0) map.set(day, found.sort((a, b) => colorOrder(a.color) - colorOrder(b.color) || a.time.localeCompare(b.time)));
   }
   return map;

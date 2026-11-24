@@ -4,6 +4,7 @@ import { el, appendHighlighted, cardDetail, pageDetail } from "./render.js";
 import { todoSection } from "./todo-view.js";
 import { loadEvents, saveEvents, personalEventsOn, monthEventMap, buildEvent, DEFAULT_COLOR } from "./event-store.js";
 import { personalEventRow, personalEventEditor } from "./event-view.js";
+import { applyEdit, applyDelete } from "./event-repeat.js";
 import { findTask, findDocByFile, findPage } from "./work-data.js";
 import {
   buildTodayModel, formatDate, ruleLabel, monthGrid, monthDotDays,
@@ -265,27 +266,29 @@ function calendarView(store, today, makeItem, closeOpen) {
     state.selected = startOfDay(date);
   }
 
-  /** Save or replace one entry; the calendar then shows the entry's (possibly new) date. */
-  function saveEntry(entry) {
-    const exists = personal.some((item) => item.id === entry.id);
-    const next = exists ? personal.map((item) => (item.id === entry.id ? entry : item)) : [...personal, entry];
+  /** Save the form values of `original` (shown on the selected day); the calendar then shows the new date. */
+  function saveEntry(original, entry, scope) {
+    const next = applyEdit(personal, original, entry, toISO(state.selected), scope);
     if (!saveEvents(next)) return false;
     personal = next;
-    goToDate(parseISODate(entry.rule.date));
+    goToDate(parseISODate(entry.rule.type === "date" ? entry.rule.date : entry.rule.start));
     draw();
     return true;
   }
 
-  /** Delete one entry. */
-  function deleteEntry(id) {
-    const next = personal.filter((item) => item.id !== id);
+  /** Delete `original` (for a repeating entry: only the selected day, or this day and all later ones). */
+  function deleteEntry(original, scope) {
+    const next = applyDelete(personal, original, toISO(state.selected), scope);
     if (!saveEvents(next)) return false;
     personal = next;
     draw();
     return true;
   }
 
-  const editorHandlers = { onSave: saveEntry, onDelete: deleteEntry, onCancel: () => draw() };
+  /** Callbacks the editor of one entry uses. */
+  function handlersFor(original) {
+    return { onSave: (entry, scope) => saveEntry(original, entry, scope), onDelete: (scope) => deleteEntry(original, scope), onCancel: () => draw() };
+  }
 
   /** Move to another month and select a sensible day in it. */
   function moveMonth(step) {
@@ -371,7 +374,7 @@ function calendarView(store, today, makeItem, closeOpen) {
     const periods = periodEventsOn(events, state.selected);
     if (mine.length + points.length + periods.length === 0) box.append(el("p", "note", "이 날은 일정이 없어요"));
     const list = el("ul", "list");
-    mine.forEach((entry) => list.append(makeItem(personalEventRow(entry), () => personalEventEditor(entry, false, editorHandlers))));
+    mine.forEach((entry) => list.append(makeItem(personalEventRow(entry), () => personalEventEditor(entry, false, handlersFor(entry), toISO(state.selected)))));
     points.forEach((event) => list.append(makeItem(eventRow(event, ruleLabel(event.rule)), () => eventDetail(event, store))));
     periods.forEach((event) => {
       const end = periodEnd(event.rule, state.selected);
@@ -393,7 +396,7 @@ function calendarView(store, today, makeItem, closeOpen) {
       draft.title = "";
       const row = el("span", "row-main");
       row.append(el("span", "row-title", "새 일정"));
-      const item = makeItem(row, () => personalEventEditor(draft, true, editorHandlers));
+      const item = makeItem(row, () => personalEventEditor(draft, true, handlersFor(draft), toISO(state.selected)));
       list.prepend(item);
       item.querySelector("button.row").click();
     });
