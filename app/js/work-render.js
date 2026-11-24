@@ -2,14 +2,17 @@
    All text goes through textContent (no HTML injection). */
 import { el, appendHighlighted, cardDetail, pageDetail } from "./render.js";
 import { todoSection } from "./todo-view.js";
+import { loadEvents, saveEvents, personalEventsOn, monthEventMap, buildEvent, DEFAULT_COLOR } from "./event-store.js";
+import { personalEventRow, personalEventEditor } from "./event-view.js";
 import { findTask, findDocByFile, findPage } from "./work-data.js";
 import {
   buildTodayModel, formatDate, ruleLabel, monthGrid, monthDotDays,
-  pointEventsOn, periodEventsOn, isSameDay, periodEnd, startOfDay,
+  pointEventsOn, periodEventsOn, isSameDay, periodEnd, startOfDay, parseISODate, toISO,
 } from "./schedule.js";
 
 const SUNDAY_COLUMN = 0;                 // 달력에서 일요일 칸의 번호
 const WEEKDAY_HEADERS = ["일", "월", "화", "수", "목", "금", "토"];
+const MAX_BARS_PER_DAY = 2;              // 달력 한 칸에 보여 줄 내 일정 색 막대 수 (넘으면 +N)
 const SAMPLE_BADGE_TEXT = "예시";
 const FOLD_MIN_CHARS = 200;              // 이 글자 수를 넘는 항목만 접어서 보여 줌 (fold_long 카드에 한해)
 const FOLD_PREVIEW_CHARS = 150;          // 접었을 때 보여 줄 앞부분 글자 수
@@ -253,6 +256,36 @@ function calendarView(store, today, makeItem, closeOpen) {
   const state = { year: today.getFullYear(), month: today.getMonth() + 1, selected: startOfDay(today) };
   const holder = el("div");
   root.append(holder);
+  let personal = loadEvents();             // 내 일정 (이 폰에만 저장)
+
+  /** Jump to a date: show its month and select it. */
+  function goToDate(date) {
+    state.year = date.getFullYear();
+    state.month = date.getMonth() + 1;
+    state.selected = startOfDay(date);
+  }
+
+  /** Save or replace one entry; the calendar then shows the entry's (possibly new) date. */
+  function saveEntry(entry) {
+    const exists = personal.some((item) => item.id === entry.id);
+    const next = exists ? personal.map((item) => (item.id === entry.id ? entry : item)) : [...personal, entry];
+    if (!saveEvents(next)) return false;
+    personal = next;
+    goToDate(parseISODate(entry.rule.date));
+    draw();
+    return true;
+  }
+
+  /** Delete one entry. */
+  function deleteEntry(id) {
+    const next = personal.filter((item) => item.id !== id);
+    if (!saveEvents(next)) return false;
+    personal = next;
+    draw();
+    return true;
+  }
+
+  const editorHandlers = { onSave: saveEntry, onDelete: deleteEntry, onCancel: () => draw() };
 
   /** Move to another month and select a sensible day in it. */
   function moveMonth(step) {
@@ -286,9 +319,18 @@ function calendarView(store, today, makeItem, closeOpen) {
     return head;
   }
 
+  /** Colored bars (background color = the entry's color) shown inside a day cell. */
+  function eventBars(entries) {
+    const bars = el("span", "bars");
+    entries.slice(0, MAX_BARS_PER_DAY).forEach((entry) => bars.append(el("span", `bar ev-${entry.color}`, entry.title)));
+    if (entries.length > MAX_BARS_PER_DAY) bars.append(el("span", "bar-more", `+${entries.length - MAX_BARS_PER_DAY}`));
+    return bars;
+  }
+
   /** The weekday header row plus one button per day. */
   function grid() {
     const dots = monthDotDays(events, state.year, state.month);
+    const myEvents = monthEventMap(personal, state.year, state.month);
     const table = el("div", "cal-grid");
     WEEKDAY_HEADERS.forEach((name, column) => table.append(el("span", column === SUNDAY_COLUMN ? "cal-wd sun" : "cal-wd", name)));
     for (const week of monthGrid(state.year, state.month)) {
@@ -301,10 +343,14 @@ function calendarView(store, today, makeItem, closeOpen) {
         if (column === SUNDAY_COLUMN) classes.push("sun");
         if (isSameDay(date, today)) classes.push("today");
         if (isSameDay(date, state.selected)) classes.push("selected");
-        const button = el("button", classes.join(" "), String(date.getDate()));
+        const mine = myEvents.get(date.getDate()) || [];
+        const button = el("button", classes.join(" "));
         button.type = "button";
-        button.setAttribute("aria-label", `${state.month}월 ${date.getDate()}일${dots.has(date.getDate()) ? ", 일정 있음" : ""}`);
+        button.append(el("span", "day-num", String(date.getDate())));
+        const hasAny = dots.has(date.getDate()) || mine.length > 0;
+        button.setAttribute("aria-label", `${state.month}월 ${date.getDate()}일${hasAny ? ", 일정 있음" : ""}`);
         if (dots.has(date.getDate())) button.append(el("span", "dot"));
+        if (mine.length > 0) button.append(eventBars(mine));
         button.addEventListener("click", () => {
           state.selected = date;
           draw();
@@ -315,27 +361,43 @@ function calendarView(store, today, makeItem, closeOpen) {
     return table;
   }
 
-  /** The selected day: its events, and (for today only) the to-do list below a divider. */
+  /** The selected day: its events (mine first), an "add" button, and (for today only) the to-do list. */
   function dayList() {
     const box = el("div", "day-list");
     box.append(el("h2", "section-title", isSameDay(state.selected, today) ? `${formatDate(state.selected)} · 오늘` : formatDate(state.selected)));
     box.append(el("h3", "day-sub", "일정"));
+    const mine = personalEventsOn(personal, state.selected);
     const points = pointEventsOn(events, state.selected);
     const periods = periodEventsOn(events, state.selected);
-    if (points.length + periods.length === 0) {
-      box.append(el("p", "note", "이 날은 일정이 없어요"));
-    } else {
-      const list = el("ul", "list");
-      points.forEach((event) => list.append(makeItem(eventRow(event, ruleLabel(event.rule)), () => eventDetail(event, store))));
-      periods.forEach((event) => {
-        const end = periodEnd(event.rule, state.selected);
-        list.append(makeItem(eventRow(event, `~ ${formatDate(end)}`), () => eventDetail(event, store)));
-      });
-      box.append(list);
-    }
+    if (mine.length + points.length + periods.length === 0) box.append(el("p", "note", "이 날은 일정이 없어요"));
+    const list = el("ul", "list");
+    mine.forEach((entry) => list.append(makeItem(personalEventRow(entry), () => personalEventEditor(entry, false, editorHandlers))));
+    points.forEach((event) => list.append(makeItem(eventRow(event, ruleLabel(event.rule)), () => eventDetail(event, store))));
+    periods.forEach((event) => {
+      const end = periodEnd(event.rule, state.selected);
+      list.append(makeItem(eventRow(event, `~ ${formatDate(end)}`), () => eventDetail(event, store)));
+    });
+    box.append(list);
+    box.append(addEntryButton(list));
     // 할일은 날짜가 없는 "지금 해야 할 일"이라 오늘을 선택했을 때만 보여 줌
     if (isSameDay(state.selected, today)) box.append(todoSection());
     return box;
+  }
+
+  /** "+ 일정 추가": opens an empty editor at the top of the list (nothing is stored until "저장"). */
+  function addEntryButton(list) {
+    const button = el("button", "btn add-event", "+ 일정 추가");
+    button.type = "button";
+    button.addEventListener("click", () => {
+      const draft = buildEvent({ id: "", title: "새 일정", date: toISO(state.selected), time: "", note: "", color: DEFAULT_COLOR });
+      draft.title = "";
+      const row = el("span", "row-main");
+      row.append(el("span", "row-title", "새 일정"));
+      const item = makeItem(row, () => personalEventEditor(draft, true, editorHandlers));
+      list.prepend(item);
+      item.querySelector("button.row").click();
+    });
+    return button;
   }
 
   /** Redraw everything (called after any change of month or selected day). */
