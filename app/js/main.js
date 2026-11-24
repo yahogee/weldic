@@ -4,20 +4,18 @@ import { searchCards, searchPages, tokenize } from "./search.js";
 import { el, cardRow, pageRow, cardDetail, pageDetail, docsPanel, buildHighlightRegex } from "./render.js";
 import { createOpenList } from "./openlist.js";
 import { toSearchShapes, toCallSearchShapes } from "./work-data.js";
-import { taskRow, taskDetail, todayView, calendarView, tasksView } from "./work-render.js";
-import { memoView } from "./memo.js";
+import { taskRow, taskDetail, homeView, tasksView } from "./work-render.js";
 import { callRow, callDetail, caseDetail, callsView } from "./call-render.js";
 import { practiceView } from "./practice.js";
 
 const WIDE_QUERY = "(min-width: 900px)";
 const PAGE_BATCH = 20;          // page hits shown per "more" click
 const SEARCH_DELAY_MS = 120;    // debounce for typing
-// 검색창 아래에 보이는 탭 목록: 앱을 처음 열면 맨 앞의 "오늘"이 보임
+// 검색창 아래에 보이는 탭 목록: 앱을 처음 열면 맨 앞의 "오늘"(달력 포함)이 보임
 const TABS = [
   { id: "today", label: "오늘" },
   { id: "calls", label: "전화" },
   { id: "tasks", label: "업무" },
-  { id: "calendar", label: "달력·메모" },   // 달력 아래에 메모를 함께 둠
   { id: "terms", label: "용어" },
 ];
 const DEFAULT_TAB = TABS[0].id;
@@ -94,12 +92,9 @@ function renderTab(tabId) {
   searchHint.hidden = true;
   tabBar.querySelectorAll(".tab").forEach((button) => button.setAttribute("aria-selected", String(button.dataset.tab === tabId)));
   const today = new Date();
-  if (tabId === "today") results.append(todayView(store, today, makeItem));
+  if (tabId === "today") results.append(homeView(store, today, makeItem, closeOpen));
   else if (tabId === "calls") renderCalls();
-  else if (tabId === "calendar") {
-    results.append(calendarView(store, today, makeItem, closeOpen));
-    results.append(el("h2", "section-title", "메모"), memoView({ makeItem, closeOpen }));
-  } else if (tabId === "tasks") results.append(tasksView(store, makeItem));
+  else if (tabId === "tasks") results.append(tasksView(store, makeItem));
   else if (tabId === "terms") renderTerms();
 }
 

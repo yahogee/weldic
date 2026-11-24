@@ -1,4 +1,4 @@
-/* Screens for the work manual: task cards, "today" overview and the month calendar.
+/* Screens for the work manual: task cards, the "오늘" screen (month calendar + upcoming events).
    All text goes through textContent (no HTML injection). */
 import { el, appendHighlighted, cardDetail, pageDetail } from "./render.js";
 import { findTask, findDocByFile, findPage } from "./work-data.js";
@@ -210,15 +210,14 @@ function appendSection(root, title, items) {
   root.append(list);
 }
 
-/** The "today" screen: prep reminders, today, next 7 days, rest of the month, running periods. */
-export function todayView(store, today, makeItem) {
+/** The "오늘" screen: the month calendar on top (opens on today), then prep reminders, next 7 days,
+    rest of the month and running periods. Today's own events are shown by the calendar's day list. */
+export function homeView(store, today, makeItem, closeOpen) {
   const root = el("div", "today-view");
+  // 달력: 앱을 켜면 맨 위에 보이고, 날짜를 누르면 바로 아래에 그날 목록이 나옴
+  root.append(calendarView(store, today, makeItem, closeOpen));
   const events = store.work.events;
-  root.append(el("h2", "today-date", `${formatDate(today)} 오늘`));
-  if (events.length === 0) {
-    root.append(el("p", "empty", "등록된 일정이 없어요"));
-    return root;
-  }
+  if (events.length === 0) return root;
   const model = buildTodayModel(events, today);
   const open = (event) => () => eventDetail(event, store);
 
@@ -233,14 +232,6 @@ export function todayView(store, today, makeItem) {
     root.append(prepBox);
   }
 
-  root.append(el("h2", "section-title", "오늘"));
-  if (model.today.length === 0) {
-    root.append(el("p", "note", "오늘 예정된 일이 없어요"));
-  } else {
-    const list = el("ul", "list");
-    model.today.forEach(({ event }) => list.append(makeItem(eventRow(event, "오늘", true), open(event))));
-    root.append(list);
-  }
   const dated = (entries) => entries.map(({ event, date }) => makeItem(eventRow(event, formatDate(date)), open(event)));
   if (model.week.length > 0) appendSection(root, "앞으로 7일", dated(model.week));
   if (model.month.length > 0) appendSection(root, "이번 달 남은 일", dated(model.month));
@@ -255,7 +246,7 @@ export function todayView(store, today, makeItem) {
 }
 
 /** The month calendar: dots on days with events; tapping a day lists its events right below. */
-export function calendarView(store, today, makeItem, closeOpen) {
+function calendarView(store, today, makeItem, closeOpen) {
   const root = el("div", "calendar-view");
   const events = store.work.events;
   const state = { year: today.getFullYear(), month: today.getMonth() + 1, selected: startOfDay(today) };
@@ -326,7 +317,7 @@ export function calendarView(store, today, makeItem, closeOpen) {
   /** The list of events of the selected day, shown directly under the grid. */
   function dayList() {
     const box = el("div", "day-list");
-    box.append(el("h2", "section-title", formatDate(state.selected)));
+    box.append(el("h2", "section-title", isSameDay(state.selected, today) ? `${formatDate(state.selected)} · 오늘` : formatDate(state.selected)));
     const points = pointEventsOn(events, state.selected);
     const periods = periodEventsOn(events, state.selected);
     if (points.length + periods.length === 0) {
