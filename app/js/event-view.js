@@ -1,7 +1,10 @@
 /* Row and inline editor of one personal schedule entry ("내 일정").
    All text goes through textContent / input values (no HTML injection). */
 import { el } from "./render.js";
-import { REPEAT_OPTIONS, SCOPE_ONE, SCOPE_FUTURE, isSeries, repeatOf, repeatLabel } from "./event-repeat.js";
+import { parseISODate } from "./schedule.js";
+import {
+  REPEAT_OPTIONS, SCOPE_ONE, SCOPE_FUTURE, isSeries, repeatOf, repeatLabel, isLunarSupported, lunarLabel, isRepeatFreqLunar,
+} from "./event-repeat.js";
 import { EVENT_COLORS, TITLE_MAX_CHARS, NOTE_MAX_CHARS, normalizeColor, isValidDateText, buildEvent } from "./event-store.js";
 
 const NOTE_ROWS = 3;                    // 메모 입력창 높이(줄 수)
@@ -74,12 +77,20 @@ export function personalEventEditor(event, isNew, handlers, occurrenceISO) {
   note.maxLength = NOTE_MAX_CHARS;
   note.value = event.note;
   const repeat = el("select", "todo-input");
-  REPEAT_OPTIONS.forEach((option) => {
+  REPEAT_OPTIONS.filter((option) => isLunarSupported() || !isRepeatFreqLunar(option.id)).forEach((option) => {
     const choice = el("option", "", option.label);
     choice.value = option.id;
     repeat.append(choice);
   });
   repeat.value = repeatOf(event);
+  // 음력 반복을 고르면 선택한 날짜의 음력 날짜를 알려 줌 (어느 날을 기준으로 반복되는지 확인용)
+  const lunarHint = el("p", "note");
+  function updateLunarHint() {
+    lunarHint.textContent = isRepeatFreqLunar(repeat.value) && isValidDateText(date.value) ? `이 날짜는 ${lunarLabel(parseISODate(date.value))}이에요` : "";
+  }
+  repeat.addEventListener("change", updateLunarHint);
+  date.addEventListener("change", updateLunarHint);
+  updateLunarHint();
   const colors = colorSelector(event.color);
   const message = el("p", "note");
   const save = el("button", "btn", "저장");
@@ -152,7 +163,7 @@ export function personalEventEditor(event, isNew, handlers, occurrenceISO) {
 
   buttons.append(save, remove);
   box.append(
-    field("일정 이름", title), field("날짜", date), field("시간 (선택)", time), field("반복", repeat),
+    field("일정 이름", title), field("날짜", date), field("시간 (선택)", time), field("반복", repeat), lunarHint,
     field("메모 (선택)", note), field("배경색", colors.node), message, buttons,
   );
   return box;
