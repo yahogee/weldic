@@ -1,6 +1,7 @@
 /* Screens for the work manual: task cards, the "오늘" screen (month calendar + upcoming events).
    All text goes through textContent (no HTML injection). */
 import { el, appendHighlighted, cardDetail, pageDetail } from "./render.js";
+import { todoSection } from "./todo-view.js";
 import { findTask, findDocByFile, findPage } from "./work-data.js";
 import {
   buildTodayModel, formatDate, ruleLabel, monthGrid, monthDotDays,
@@ -314,23 +315,26 @@ function calendarView(store, today, makeItem, closeOpen) {
     return table;
   }
 
-  /** The list of events of the selected day, shown directly under the grid. */
+  /** The selected day: its events, and (for today only) the to-do list below a divider. */
   function dayList() {
     const box = el("div", "day-list");
     box.append(el("h2", "section-title", isSameDay(state.selected, today) ? `${formatDate(state.selected)} · 오늘` : formatDate(state.selected)));
+    box.append(el("h3", "day-sub", "일정"));
     const points = pointEventsOn(events, state.selected);
     const periods = periodEventsOn(events, state.selected);
     if (points.length + periods.length === 0) {
       box.append(el("p", "note", "이 날은 일정이 없어요"));
-      return box;
+    } else {
+      const list = el("ul", "list");
+      points.forEach((event) => list.append(makeItem(eventRow(event, ruleLabel(event.rule)), () => eventDetail(event, store))));
+      periods.forEach((event) => {
+        const end = periodEnd(event.rule, state.selected);
+        list.append(makeItem(eventRow(event, `~ ${formatDate(end)}`), () => eventDetail(event, store)));
+      });
+      box.append(list);
     }
-    const list = el("ul", "list");
-    points.forEach((event) => list.append(makeItem(eventRow(event, ruleLabel(event.rule)), () => eventDetail(event, store))));
-    periods.forEach((event) => {
-      const end = periodEnd(event.rule, state.selected);
-      list.append(makeItem(eventRow(event, `~ ${formatDate(end)}`), () => eventDetail(event, store)));
-    });
-    box.append(list);
+    // 할일은 날짜가 없는 "지금 해야 할 일"이라 오늘을 선택했을 때만 보여 줌
+    if (isSameDay(state.selected, today)) box.append(todoSection());
     return box;
   }
 

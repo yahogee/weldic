@@ -119,6 +119,7 @@ footer p { margin: 2px 0; }
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
 .cal-wd { text-align: center; font-size: .8rem; color: var(--muted); padding: 2px 0; }
 .sun { color: var(--sun); }
+.day-sub { font-size: .95rem; color: var(--accent); margin: 10px 0 4px; }
 .day { position: relative; min-height: 46px; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
 .day.sun { color: var(--sun); }
 .day.today { border-color: var(--accent); border-width: 2px; font-weight: 700; }
@@ -146,3 +147,19 @@ footer p { margin: 2px 0; }
 .quiz-verdict { font-weight: 700; margin: 4px 0; }
 .quiz-feedback h3 { font-size: .95rem; color: var(--accent); margin: 12px 0 4px; }
 
+
+/* 할일 (오늘 날짜 아래, 일정과 줄로 구분) */
+.todo-box { border-top: 2px solid var(--line); margin-top: 18px; padding-top: 4px; }
+.todo-add { display: flex; flex-direction: column; gap: 8px; margin: 6px 0; }
+.todo-input { width: 100%; font: inherit; padding: 10px; border: 2px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); }
+.todo-input:focus { outline: none; border-color: var(--accent); }
+.prio-group { display: flex; gap: 6px; }
+.prio { flex: 1; min-height: 40px; font: inherit; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--muted); cursor: pointer; }
+.prio[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); font-weight: 700; }
+.todo-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; }
+.todo-done { flex: none; min-height: 40px; padding: 0 14px; font: inherit; border: 1px solid var(--accent); border-radius: 999px; background: var(--bg); color: var(--accent); cursor: pointer; }
+.todo-title { flex: 1; min-height: 44px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; text-align: left; font: inherit; color: var(--text); background: none; border: 0; cursor: pointer; }
+.prio-chip.prio-high { background: var(--warn-bg); color: var(--sun); border-color: transparent; font-weight: 700; }
+.prio-chip.prio-low { color: var(--muted); }
+.todo-editor { padding: 4px 12px 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); }
+.todo-undo { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
