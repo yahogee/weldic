@@ -1,6 +1,8 @@
 /* Storage and ordering of the to-do list ("할일").
    To-dos have no date: they stay on the list until the user finishes (deletes) them.
-   They live only in this browser's localStorage and are never sent anywhere. */
+   They live in this browser's localStorage; the sync module (sync.js) copies them to the
+   sync server only when the user has connected devices. */
+import { notifyDataChanged } from "./change-bus.js";
 
 const STORAGE_KEY = "weldic.todos.v1";
 
@@ -35,10 +37,12 @@ export function loadTodos() {
   }
 }
 
-/** Write all to-dos; returns false when the browser refuses to store them. */
-export function saveTodos(todos) {
+/** Write all to-dos; returns false when the browser refuses to store them.
+    silent = true is used by the sync module itself so that it does not trigger another sync. */
+export function saveTodos(todos, silent = false) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+    if (!silent) notifyDataChanged();
     return true;
   } catch (error) {
     return false;

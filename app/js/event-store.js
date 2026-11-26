@@ -1,7 +1,9 @@
 /* Storage of the user's own schedule entries ("내 일정").
    Each entry has a rule: one time { type: "date", date } or repeating { type: "repeat", freq, start, until }
    (see event-repeat.js), plus time, note, color and a "skip" list of single days left out of a repeat.
-   Entries live only in this browser's localStorage and are never sent anywhere. */
+   Entries live in this browser's localStorage; the sync module (sync.js) copies them to the
+   sync server only when the user has connected devices. */
+import { notifyDataChanged } from "./change-bus.js";
 import { daysInMonth, parseISODate } from "./schedule.js";
 import { occursOn, isRepeatFreq, buildRule } from "./event-repeat.js";
 
@@ -77,10 +79,12 @@ export function loadEvents() {
   }
 }
 
-/** Write all entries; returns false when the browser refuses to store them. */
-export function saveEvents(events) {
+/** Write all entries; returns false when the browser refuses to store them.
+    silent = true is used by the sync module itself so that it does not trigger another sync. */
+export function saveEvents(events, silent = false) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+    if (!silent) notifyDataChanged();
     return true;
   } catch (error) {
     return false;

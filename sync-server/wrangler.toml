@@ -1,0 +1,9 @@
+# wrangler로 올릴 때 쓰는 설정 (대시보드에서 직접 붙여넣어 올려도 됨)
+name = "weldic-sync"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# KV 저장소 연결: 이름은 반드시 SYNC_KV (worker.js가 이 이름으로 읽고 씀)
+[[kv_namespaces]]
+binding = "SYNC_KV"
+id = "여기에_KV_네임스페이스_ID"

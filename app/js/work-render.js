@@ -2,6 +2,7 @@
    All text goes through textContent (no HTML injection). */
 import { el, appendHighlighted, cardDetail, pageDetail } from "./render.js";
 import { todoSection } from "./todo-view.js";
+import { syncPanel } from "./sync-view.js";
 import { loadEvents, saveEvents, personalEventsOn, monthEventMap, buildEvent, DEFAULT_COLOR } from "./event-store.js";
 import { personalEventRow, personalEventEditor } from "./event-view.js";
 import { applyEdit, applyDelete } from "./event-repeat.js";
@@ -222,7 +223,10 @@ export function homeView(store, today, makeItem, closeOpen) {
   // 달력: 앱을 켜면 맨 위에 보이고, 날짜를 누르면 바로 아래에 그날 목록이 나옴
   root.append(calendarView(store, today, makeItem, closeOpen));
   const events = store.work.events;
-  if (events.length === 0) return root;
+  if (events.length === 0) {
+    root.append(syncPanel());
+    return root;
+  }
   const model = buildTodayModel(events, today);
   const open = (event) => () => eventDetail(event, store);
 
@@ -247,6 +251,7 @@ export function homeView(store, today, makeItem, closeOpen) {
     appendSection(root, "진행 중인 기간", model.periods.map(({ event, end }) => makeItem(eventRow(event, `~ ${formatDate(end)}`), open(event))));
   }
   root.append(el("p", "note", "일정은 업무 매뉴얼을 정리한 참고용이에요. 정확한 날짜는 공문과 담당자 안내를 확인하세요."));
+  root.append(syncPanel());
   return root;
 }
 

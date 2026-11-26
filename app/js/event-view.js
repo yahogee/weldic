@@ -1,5 +1,6 @@
 /* Row and inline editor of one personal schedule entry ("내 일정").
    All text goes through textContent / input values (no HTML injection). */
+import { storageNotice } from "./sync.js";
 import { el } from "./render.js";
 import { parseISODate } from "./schedule.js";
 import {
@@ -8,8 +9,7 @@ import {
 import { EVENT_COLORS, TITLE_MAX_CHARS, NOTE_MAX_CHARS, normalizeColor, isValidDateText, buildEvent } from "./event-store.js";
 
 const NOTE_ROWS = 3;                    // 메모 입력창 높이(줄 수)
-const STORAGE_NOTICE = "내 일정은 이 폰(이 브라우저)에만 저장돼요. 백업되지 않고, 앱 데이터를 지우면 사라져요. "
-  + "비밀번호, 주민번호, 대상자 이름·상담 내용 등 보안이 필요한 내용은 적지 마세요.";
+const SECURITY_NOTICE = " 비밀번호, 주민번호, 대상자 이름·상담 내용 등 보안이 필요한 내용은 적지 마세요.";
 const SAVE_FAILED_TEXT = "이 브라우저에서는 저장할 수 없어요 (시크릿 모드이거나 저장이 막혀 있어요)";
 const EMPTY_TITLE_TEXT = "일정 이름을 입력하세요";
 const EMPTY_DATE_TEXT = "날짜를 선택하세요";
@@ -61,7 +61,7 @@ function field(labelText, control) {
     For a repeating entry the user is asked "이 날만 / 앞으로 전부" before saving or deleting. */
 export function personalEventEditor(event, isNew, handlers, occurrenceISO) {
   const box = el("div", "detail-body event-editor");
-  box.append(el("p", "note", `⚠ ${STORAGE_NOTICE}`));
+  box.append(el("p", "note", `⚠ ${storageNotice("내 일정")}${SECURITY_NOTICE}`));
   const title = el("input", "todo-input");
   title.type = "text";
   title.maxLength = TITLE_MAX_CHARS;

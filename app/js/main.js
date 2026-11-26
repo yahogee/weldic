@@ -7,6 +7,7 @@ import { toSearchShapes, toCallSearchShapes } from "./work-data.js";
 import { taskRow, taskDetail, homeView, tasksView } from "./work-render.js";
 import { callRow, callDetail, caseDetail, callsView } from "./call-render.js";
 import { practiceView } from "./practice.js";
+import { startSync, connectFromLink, onSyncPulled } from "./sync.js";
 
 const WIDE_QUERY = "(min-width: 900px)";
 const PAGE_BATCH = 20;          // page hits shown per "more" click
@@ -210,6 +211,13 @@ docsButton.addEventListener("click", toggleDocs);
 footerInfo.textContent = store.manifest.builtAt ? `자료 갱신 ${store.manifest.builtAt}` : "";
 buildTabs();
 renderTab(DEFAULT_TAB);
+// 기기 연결: 연결 링크(#sync=코드)로 열렸으면 먼저 연결하고, 저장·앱 켜짐·복귀 때마다 서버와 맞춤
+connectFromLink();
+startSync();
+// 다른 기기에서 바뀐 내용이 들어오면 "오늘" 화면을 다시 그림 (검색 중이거나 다른 탭이면 그대로 둠)
+onSyncPulled(() => {
+  if (!input.value.trim() && activeTab === "today") renderTab("today");
+});
 loadAllPages(store, () => {
   if (input.value.trim()) runSearch();   // refresh results as more documents arrive
 });

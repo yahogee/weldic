@@ -1,6 +1,7 @@
 /* The "할일" section shown under today's schedule.
    Finished to-dos are deleted (with a short "undo" line); unfinished ones simply stay on the list,
    so they appear again every day. All text goes through textContent (no HTML injection). */
+import { storageNotice, onSyncStatus } from "./sync.js";
 import { el } from "./render.js";
 import {
   PRIORITIES, DEFAULT_PRIORITY, TITLE_MAX_CHARS, priorityOf,
@@ -8,8 +9,7 @@ import {
 } from "./todo-store.js";
 
 const UNDO_VISIBLE_MS = 6000;            // "되돌리기" 줄이 떠 있는 시간
-const STORAGE_NOTICE = "할일은 이 폰(이 브라우저)에만 저장돼요. 백업되지 않고, 앱 데이터를 지우면 사라져요. "
-  + "비밀번호, 주민번호, 대상자 이름·상담 내용 등 보안이 필요한 내용은 적지 마세요.";
+const SECURITY_NOTICE = " 비밀번호, 주민번호, 대상자 이름·상담 내용 등 보안이 필요한 내용은 적지 마세요.";
 const SAVE_FAILED_TEXT = "이 브라우저에서는 저장할 수 없어요 (시크릿 모드이거나 저장이 막혀 있어요)";
 const EMPTY_TITLE_TEXT = "할일을 입력하세요";
 
@@ -41,7 +41,12 @@ function prioritySelector(initialId) {
 export function todoSection() {
   const root = el("div", "todo-box");
   root.append(el("h3", "day-sub", "할일"));
-  root.append(el("p", "note", STORAGE_NOTICE));
+  // 안내 문구: 기기 연결 상태가 바뀌면(연결/끊기) 그 자리에서 문구도 바뀜
+  const notice = el("p", "note");
+  const refreshNotice = () => { notice.textContent = storageNotice("할일") + SECURITY_NOTICE; };
+  refreshNotice();
+  onSyncStatus(() => { if (notice.isConnected) refreshNotice(); });
+  root.append(notice);
 
   let todos = sortTodos(loadTodos());
   let editingId = null;                  // 지금 수정창이 열려 있는 할일의 id

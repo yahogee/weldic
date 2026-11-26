@@ -187,3 +187,9 @@ footer p { margin: 2px 0; }
 .color-btn[aria-pressed="true"] { border-color: var(--text); box-shadow: 0 0 0 2px var(--bg) inset; font-weight: 700; }
 .color-btn[aria-pressed="true"]::after { content: "✓"; }
 .add-event { margin: 4px 0 8px; }
+
+/* 기기 연결 패널 */
+.sync-box { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--line); }
+.sync-code { font-family: ui-monospace, monospace; font-size: 1rem; word-break: break-all; margin: 6px 0; user-select: all; }
+.sync-link { word-break: break-all; user-select: all; }
+.sync-box .todo-input { margin-top: 8px; }
